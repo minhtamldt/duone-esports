@@ -70,7 +70,7 @@ document.head.insertAdjacentHTML('beforeend', `
 `);
 
 /* ─── Stat counter animation ─────────────────────────────────── */
-function animateCount(el, target, suffix = '') {
+function animateCount(el, target, prefix = '', suffix = '') {
   const duration = 1200;
   const start = performance.now();
   const update = (now) => {
@@ -78,7 +78,7 @@ function animateCount(el, target, suffix = '') {
     const progress = Math.min(elapsed / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
     const current = Math.round(eased * target);
-    el.textContent = current + suffix;
+    el.textContent = prefix + current + suffix;
     if (progress < 1) requestAnimationFrame(update);
   };
   requestAnimationFrame(update);
@@ -90,11 +90,18 @@ const statObs = new IntersectionObserver((entries) => {
     if (entry.isIntersecting) {
       const el = entry.target;
       const raw = el.textContent.trim();
-      const isM = raw.includes('M');
-      if (isM) {
-        animateCount(el, 1, 'M');
+      const match = raw.match(/^([~><]?)\s*(\d+)\s*([A-Za-z\+]?)$/);
+      
+      if (match) {
+        const prefix = match[1];
+        const target = parseInt(match[2], 10);
+        const suffix = match[3];
+        animateCount(el, target, prefix, suffix);
       } else {
-        animateCount(el, parseInt(raw));
+        const target = parseInt(raw, 10);
+        if (!isNaN(target)) {
+          animateCount(el, target);
+        }
       }
       statObs.unobserve(el);
     }
